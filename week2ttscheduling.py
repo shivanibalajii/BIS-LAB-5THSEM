@@ -1,11 +1,17 @@
+
 import random
 
 # Timetable details
 subjects = ["Maths", "Physics", "Python", "Civil", "C Programming"]
 
-days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+sections = ["A", "B", "C"]
 
-slots = ["9-10 AM", "10-11 AM", "11-12 PM", "1-2 PM", "2-3 PM"]
+classrooms = [
+    "Room 1", "Room 2", "Room 3", "Room 4",
+    "Room 5", "Room 6", "Room 7", "Room 8"
+]
+
+day = "Monday"
 
 SWARM_SIZE = 30
 MAX_ITERATIONS = 100
@@ -15,18 +21,28 @@ C1 = 1.5
 C2 = 2.5
 
 
-# Generate a random timetable
+# Generate random classroom assignments
 def random_position():
-    return random.sample(range(25), 5)
+    return [
+        random.randint(0, 7)
+        for i in range(15)
+    ]
 
 
 # Calculate fitness
 def fitness(position):
     penalty = 0
 
-    # Check for duplicate time slots
-    if len(set(position)) != len(position):
-        penalty += 100
+    # Check classroom clashes between sections
+    for i in range(5):
+        assigned_rooms = [
+            position[i],
+            position[i + 5],
+            position[i + 10]
+        ]
+
+        if len(set(assigned_rooms)) != 3:
+            penalty += 100
 
     return penalty
 
@@ -34,18 +50,20 @@ def fitness(position):
 # Particle Swarm Optimization
 def pso():
 
-    # Initialization
     swarm = []
 
+    # Initialization
     for i in range(SWARM_SIZE):
         position = random_position()
-        velocity = [0] * 5
-
+        velocity = [0.0] * 15
         pbest = position[:]
 
         swarm.append([position, velocity, pbest])
 
-    gbest = min(swarm, key=lambda x: fitness(x[0]))[0][:]
+    gbest = min(
+        swarm,
+        key=lambda x: fitness(x[0])
+    )[0][:]
 
     # Iterations
     for iteration in range(MAX_ITERATIONS):
@@ -64,7 +82,7 @@ def pso():
                 gbest = particle[2][:]
 
             # Update velocity and position
-            for j in range(5):
+            for j in range(15):
 
                 r1 = random.random()
                 r2 = random.random()
@@ -75,22 +93,33 @@ def pso():
                     + C2 * r2 * (gbest[j] - position[j])
                 )
 
-                position[j] = round(position[j] + velocity[j])
+                position[j] = round(
+                    position[j] + velocity[j]
+                )
 
-                # Keep position within valid range
-                position[j] = max(0, min(24, position[j]))
+                position[j] = max(
+                    0, min(7, position[j])
+                )
 
     return gbest
 
 
-# Display timetable
+# Main program
 best = pso()
 
-print("\nOPTIMIZED TIME TABLE\n")
+print("\nOPTIMIZED TIMETABLE\n")
 
-for i in range(len(subjects)):
+# Display timetable
+for s in range(3):
 
-    day = best[i] // 5
-    slot = best[i] % 5
+    print("\nSection:", sections[s])
 
-    print(subjects[i], "-", days[day], "-", slots[slot])
+    for i in range(5):
+
+        room = best[s * 5 + i]
+
+        print(
+            day, "-",
+            subjects[i], "-",
+            classrooms[room]
+        )
